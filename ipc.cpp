@@ -87,22 +87,22 @@ void IPC::WaitUntilReaderAttached(bool lock)
 }
 
 
-bool IPC::Write(QByteArray &content, IPC::WriteError &error)
+bool IPC::Write(QByteArray &content, IPC::WriteError &error, bool lock)
 {
-    if (!Lock()) {
+    if (lock && !Lock()) {
         error = IPC::WriteError::LockFail;
         return false;
     }
 
     errno_t err = 0;
-    char type = GetCharType(m_pSharedMemory, false);
+    char type = GetCharType(m_pSharedMemory, !lock);
     if (type == 0) {
-        IncrCharType(m_pSharedMemory, false);
+        IncrCharType(m_pSharedMemory, !lock);
 
         err = memcpy_s((char *)m_pSharedMemory->data() + 1, m_MaxBytes, content.constData(), content.size());
     }
 
-    if (!Unlock()) {
+    if (lock && !Unlock()) {
         error = IPC::WriteError::UnlockFail;
     }
 
@@ -129,21 +129,21 @@ bool IPC::Write(QByteArray &content, IPC::WriteError &error)
 }
 
 
-bool IPC::Read(QByteArray &content, qsizetype nbytes, IPC::ReadError &error)
+bool IPC::Read(QByteArray &content, qsizetype nbytes, IPC::ReadError &error, bool lock)
 {
-    if (!Lock()) {
+    if (lock && !Lock()) {
         error = IPC::ReadError::LockFail;
         return false;
     }
 
-    char type = GetCharType(m_pSharedMemory, false);
+    char type = GetCharType(m_pSharedMemory, !lock);
     if (type > 0) {
-        DecrCharType(m_pSharedMemory, false);
+        DecrCharType(m_pSharedMemory, !lock);
 
         content.append((const char *)m_pSharedMemory->constData() + 1, nbytes);
     }
 
-    if (!Unlock()) {
+    if (lock && !Unlock()) {
         error = IPC::ReadError::UnlockFail;
     }
 
