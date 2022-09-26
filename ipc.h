@@ -140,6 +140,7 @@ private:
     bool Unlock();
     // 设置锁状态
     void SetLocked(bool status);
+    void SetLocked(QSharedMemory *&pSharedMemory, bool status);
 
 
     // 标记端类型
