@@ -373,3 +373,15 @@ void IPC::SetLocked(bool status)
         m_IsSharedMemory2Locked = status;
     }
 }
+
+
+void IPC::SetLocked(QSharedMemory *&pSharedMemory, bool status)
+{
+    if (pSharedMemory == m_pSharedMemory1) {
+        m_IsSharedMemory1Locked = status;
+    }
+    else {
+        m_IsSharedMemory2Locked = status;
+    }
+}
+
