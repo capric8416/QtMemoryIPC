@@ -5,161 +5,159 @@
 
 
 
-
-
 class IPC
 {
 public:
-    // ¹²ÏíÄÚ´æ¼üÇ°×º
+    // å…±äº«å†…å­˜é”®å‰ç¼€
     const QString SharedMemoryKeyPrefix = "shared_memory_key";
 
-    // ¶ËÀàĞÍ
+    // ç«¯ç±»å‹
     enum class Type
     {
-        // Î´¶¨Òå
+        // æœªå®šä¹‰
         None,
-        // Ğ´Èë¶Ë
+        // å†™å…¥ç«¯
         Writer,
-        // ¶ÁÈ¡¶Ë
+        // è¯»å–ç«¯
         Reader,
     };
 
-    // ¹²ÏíÄÚ´æ¶ÁÈ¡´íÎó
+    // å…±äº«å†…å­˜è¯»å–é”™è¯¯
     enum class ReadError
     {
-        // ÎŞ´íÎó
+        // æ— é”™è¯¯
         NoError = 0,
-        // ¼ÓËøÊ§°Ü
+        // åŠ é”å¤±è´¥
         LockFail = -1,
-        // ½âËøÊ§°Ü
+        // è§£é”å¤±è´¥
         UnlockFail = -2,
-        // ¶Ô¶ËÒÑÍË³ö
+        // å¯¹ç«¯å·²é€€å‡º
         Quit = -3,
-        // ÎŞÊı¾İ¿É¹©¶ÁÈ¡
+        // æ— æ•°æ®å¯ä¾›è¯»å–
         NoData = -4,
     };
 
-    // ¹²ÏíÄÚ´æĞ´Èë´íÎó
+    // å…±äº«å†…å­˜å†™å…¥é”™è¯¯
     enum class WriteError
     {
-        // ÎŞ´íÎó
+        // æ— é”™è¯¯
         NoError = 0,
-        // ¼ÓËøÊ§°Ü
+        // åŠ é”å¤±è´¥
         LockFail = -1,
-        // ½âËøÊ§°Ü
+        // è§£é”å¤±è´¥
         UnlockFail = -2,
-        // ÄÚ´æ¿½±´´íÎó
+        // å†…å­˜æ‹·è´é”™è¯¯
         MemcopyFail = -3,
-        // ²»¿ÉĞ´Èë£¬ÒòÎªÉÏ´ÎĞ´ÈëµÄÄÚÈİ»¹Î´±»¶ÁÈ¡
+        // ä¸å¯å†™å…¥ï¼Œå› ä¸ºä¸Šæ¬¡å†™å…¥çš„å†…å®¹è¿˜æœªè¢«è¯»å–
         NoSpace = -4,
-        // ¶ÁÈ¡¶ËÒÑÍË³ö
+        // è¯»å–ç«¯å·²é€€å‡º
         NoReader = -5,
     };
 
-    // ¹²ÏíÄÚ´æÊ××Ö½ÚÀàĞÍ
+    // å…±äº«å†…å­˜é¦–å­—èŠ‚ç±»å‹
     enum class CharType : char
     {
-        // Í¨Öª¶Ô¶ËÍË³ö
+        // é€šçŸ¥å¯¹ç«¯é€€å‡º
         Quit = -128,
-        // µÈ´ı¶ÁÈ¡ÕßÉÏÏß
+        // ç­‰å¾…è¯»å–è€…ä¸Šçº¿
         WaitReaderAttached = -64,
-        // ¶ÁÈ¡¶ËÉÏÏß
+        // è¯»å–ç«¯ä¸Šçº¿
         ReaderAttach = -32,
-        // ¶ÁÈ¡¶ËÏÂÏß
+        // è¯»å–ç«¯ä¸‹çº¿
         ReaderDetach = -16,
-        // Ğ´ÈëÇ°ÖÃÎ»
+        // å†™å…¥å‰ç½®ä½
         InitForWriting = 0,
     };
 
 
 public:
-    // ¹²ÏíÄÚ´æ¼üºÍ´óĞ¡£¬×¢ÒâÆ½Ì¨²îÒì
+    // å…±äº«å†…å­˜é”®å’Œå¤§å°ï¼Œæ³¨æ„å¹³å°å·®å¼‚
     IPC(QString key, qsizetype maxBytes);
     ~IPC();
 
-    // ¿ªÆôĞ´Èë¶Ë
+    // å¼€å¯å†™å…¥ç«¯
     bool StartWriter();
-    // ÖÕÖ¹Ğ´Èë¶Ë
+    // ç»ˆæ­¢å†™å…¥ç«¯
     bool StopWriter();
 
-    // ¿ªÆô¶ÁÈ¡¶Ë
+    // å¼€å¯è¯»å–ç«¯
     bool StartReader();
-    // ÖÕÖ¹¶ÁÈ¡¶Ë
+    // ç»ˆæ­¢è¯»å–ç«¯
     bool StopReader();
 
-    // µÈ´ı¶ÁÈ¡¶ËÉÏÏß
+    // ç­‰å¾…è¯»å–ç«¯ä¸Šçº¿
     void WaitUntilReaderAttached(bool lock = true);
 
-    // Ğ´ÈëÊı¾İ
-    bool Write(QByteArray &content, IPC::WriteError &error);
-    // ¶ÁÈ¡Êı¾İ
-    bool Read(QByteArray &content, qsizetype nbytes, IPC::ReadError &error);
+    // å†™å…¥æ•°æ®
+    bool Write(QByteArray &content, IPC::WriteError &error, bool lock = true);
+    // è¯»å–æ•°æ®
+    bool Read(QByteArray &content, qsizetype nbytes, IPC::ReadError &error, bool lock = true);
 
-    // ¶ÁÈ¡¶ËÉÏÏß£¬Í¨ÖªĞ´Èë¶Ë
+    // è¯»å–ç«¯ä¸Šçº¿ï¼Œé€šçŸ¥å†™å…¥ç«¯
     void SetReaderAttachChar(bool lock = true);
-    // Í¨Öª¶Ô¶ËÎÒ·½ÒÑÏÂÏß
+    // é€šçŸ¥å¯¹ç«¯æˆ‘æ–¹å·²ä¸‹çº¿
     void SetQuitChar(bool lock = true);
-    // ¶ÁÈ¡¶ËÏÂÏß£¬Í¨ÖªĞ´Èë¶Ë
+    // è¯»å–ç«¯ä¸‹çº¿ï¼Œé€šçŸ¥å†™å…¥ç«¯
     void SetReaderDetachChar(bool lock = true);
 
-    // ¶ÁÈ¡¶ËÊÇ·ñÒÑÉÏÏß
+    // è¯»å–ç«¯æ˜¯å¦å·²ä¸Šçº¿
     bool IsReaderAttached(bool lock = true);
 
 
 private:
-    // ¿ªÆôĞ´Èë¶Ë¹²ÏíÄÚ´æ
+    // å¼€å¯å†™å…¥ç«¯å…±äº«å†…å­˜
     bool StartWriteShare(QSharedMemory *&pSharedMemory, QString &key);
-    // ¿ªÆô¶ÁÈ¡¶Ë¹²ÏíÄÚ´æ
+    // å¼€å¯è¯»å–ç«¯å…±äº«å†…å­˜
     bool StartReadShare(QSharedMemory *&pSharedMemory, QString &key);
-    // ÖÕÖ¹Ğ´Èë¶Ë/¶ÁÈ¡¶Ë¹²ÏíÄÚ´æ
+    // ç»ˆæ­¢å†™å…¥ç«¯/è¯»å–ç«¯å…±äº«å†…å­˜
     bool StopAllShare(QSharedMemory *&pSharedMemory);
 
-    // ½»»¥Ë«»º³åÇø
+    // äº¤äº’åŒç¼“å†²åŒº
     void Swap();
 
-    // ¶ÁÈ¡¶ËÊÇ·ñÒÑÉÏÏß
+    // è¯»å–ç«¯æ˜¯å¦å·²ä¸Šçº¿
     bool IsReaderAttached(QSharedMemory *&pSharedMemory, bool lock = true);
 
-    // ¶ÁÈ¡¶ËÉÏÏß£¬Í¨ÖªĞ´Èë¶Ë
+    // è¯»å–ç«¯ä¸Šçº¿ï¼Œé€šçŸ¥å†™å…¥ç«¯
     void SetReaderAttachChar(QSharedMemory *&pSharedMemory, bool lock = true);
-    // Í¨Öª¶Ô¶ËÎÒ·½ÒÑÏÂÏß
+    // é€šçŸ¥å¯¹ç«¯æˆ‘æ–¹å·²ä¸‹çº¿
     void SetQuitChar(QSharedMemory *&pSharedMemory, bool lock = true);
-    // ¶ÁÈ¡¶ËÏÂÏß£¬Í¨ÖªĞ´Èë¶Ë
+    // è¯»å–ç«¯ä¸‹çº¿ï¼Œé€šçŸ¥å†™å…¥ç«¯
     void SetReaderDetachChar(QSharedMemory *&pSharedMemory, bool lock = true);
 
-    // Ğ´Èë¶Ë£¬Ôö¼Ó¼ÆÊı
+    // å†™å…¥ç«¯ï¼Œå¢åŠ è®¡æ•°
     char IncrCharType(QSharedMemory *&pSharedMemory, bool lock = true);
-    // ¶ÁÈ¡¶Ë£¬¼õÉÙ¼ÆÊı
+    // è¯»å–ç«¯ï¼Œå‡å°‘è®¡æ•°
     char DecrCharType(QSharedMemory *&pSharedMemory, bool lock = true);
-    // Ğ´Èë¹²ÏíÄÚ´æÊ××Ö½ÚÀàĞÍ
+    // å†™å…¥å…±äº«å†…å­˜é¦–å­—èŠ‚ç±»å‹
     void SetCharType(QSharedMemory *&pSharedMemory, const char type, bool lock = true);
-    // ¶ÁÈ¡¹²ÏíÄÚ´æÊ××Ö½ÚÀàĞÍ
+    // è¯»å–å…±äº«å†…å­˜é¦–å­—èŠ‚ç±»å‹
     char GetCharType(QSharedMemory *&pSharedMemory, bool lock = true);
 
-    // ¼ÓËø
+    // åŠ é”
     bool Lock();
-    // ½âËø
+    // è§£é”
     bool Unlock();
-    // ÉèÖÃËø×´Ì¬
+    // è®¾ç½®é”çŠ¶æ€
     void SetLocked(bool status);
 
 
-    // ±ê¼Ç¶ËÀàĞÍ
+    // æ ‡è®°ç«¯ç±»å‹
     IPC::Type m_Type;
 
-    // ±ê¼ÇËø×´Ì¬
+    // æ ‡è®°é”çŠ¶æ€
     bool m_IsSharedMemory1Locked;
     bool m_IsSharedMemory2Locked;
 
-    // Ë«»º³å
+    // åŒç¼“å†²
     QSharedMemory *m_pSharedMemory;
     QSharedMemory *m_pSharedMemory1;
     QSharedMemory *m_pSharedMemory2;
 
-    // ¹²ÏíÄÚ´æ¼ü
+    // å…±äº«å†…å­˜é”®
     QString m_MemoryKey1;
     QString m_MemoryKey2;
 
-    // ¹²ÏíÄÚ´æ´óĞ¡
+    // å…±äº«å†…å­˜å¤§å°
     qsizetype m_MaxBytes;
 };
