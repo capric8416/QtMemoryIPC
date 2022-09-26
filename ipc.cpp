@@ -226,6 +226,10 @@ bool IPC::IsReaderAttached(bool lock)
 bool IPC::IsReaderAttached(QSharedMemory *&pSharedMemory, bool lock)
 {
     if (!lock || pSharedMemory->lock()) {
+        if (lock) {
+            SetLocket(pSharedMemory, true);
+        }
+        
         if (GetCharType(pSharedMemory, !lock) == (char)CharType::ReaderAttach) {
             return true;
         }
@@ -235,6 +239,7 @@ bool IPC::IsReaderAttached(QSharedMemory *&pSharedMemory, bool lock)
 
         if (lock) {
             pSharedMemory->unlock();
+            SetLocket(pSharedMemory, false);
         }
     }
 
@@ -286,11 +291,16 @@ char IPC::IncrCharType(QSharedMemory *&pSharedMemory, bool lock)
     char v = 0;
 
     if (!lock || pSharedMemory->lock()) {
+        if (lock) {
+            SetLocket(pSharedMemory, true);
+        }
+        
         v = ((char *)m_pSharedMemory->constData())[0] + 1;
         memset(m_pSharedMemory->data(), v, 1);
 
         if (lock) {
             pSharedMemory->unlock();
+            SetLocket(pSharedMemory, false);
         }
     }
 
@@ -303,11 +313,16 @@ char IPC::DecrCharType(QSharedMemory *&pSharedMemory, bool lock)
     char v = 0;
 
     if (!lock || pSharedMemory->lock()) {
+        if (lock) {
+            SetLocket(pSharedMemory, true);
+        }
+        
         v = ((char *)m_pSharedMemory->constData())[0] - 1;
         memset(m_pSharedMemory->data(), v, 1);
 
         if (lock) {
             pSharedMemory->unlock();
+            SetLocket(pSharedMemory, false);
         }
     }
 
@@ -318,10 +333,15 @@ char IPC::DecrCharType(QSharedMemory *&pSharedMemory, bool lock)
 void IPC::SetCharType(QSharedMemory *&pSharedMemory, const char type, bool lock)
 {
     if (!lock || pSharedMemory->lock()) {
+        if (lock) {
+            SetLocket(pSharedMemory, true);
+        }
+        
         memset(pSharedMemory->data(), type, 1);
 
         if (lock) {
             pSharedMemory->unlock();
+            SetLocket(pSharedMemory, false);
         }
     }
 }
@@ -331,10 +351,15 @@ char IPC::GetCharType(QSharedMemory *&pSharedMemory, bool lock)
 {
     char type = 0;
     if (!lock || pSharedMemory->lock()) {
+        if (lock) {
+            SetLocket(pSharedMemory, true);
+        }
+        
         type = ((const char *)pSharedMemory->constData())[0];
 
         if (lock) {
             pSharedMemory->unlock();
+            SetLocket(pSharedMemory, false);
         }
     }
 
