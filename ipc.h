@@ -1,15 +1,22 @@
 #pragma once
 
+// project
+#include "../task/pool.h"
+
 // qt
 #include <QtCore/QSharedMemory>
 
 
 
-class IPC
+class IPC : public QObject
 {
+    Q_OBJECT
+
+
 public:
     // 共享内存键前缀
     const QString SharedMemoryKeyPrefix = "shared_memory_key";
+    static const qsizetype DefaultMaxBytes = 4 * 1000 * 1024;
 
     // 端类型
     enum class Type
@@ -35,6 +42,10 @@ public:
         Quit = -3,
         // 无数据可供读取
         NoData = -4,
+        // 取消
+        Canceling = -5,
+        // 未启动
+        Stopped = -6,
     };
 
     // 共享内存写入错误
@@ -52,6 +63,10 @@ public:
         NoSpace = -4,
         // 读取端已退出
         NoReader = -5,
+        // 取消
+        Canceling = -6,
+        // 未启动
+        Stopped = -7,
     };
 
     // 共享内存首字节类型
@@ -72,25 +87,35 @@ public:
 
 public:
     // 共享内存键和大小，注意平台差异
-    IPC(QString key, qsizetype maxBytes);
+    IPC();
     ~IPC();
 
     // 开启写入端
-    bool StartWriter();
+    bool StartWriter(QString key, qsizetype maxBytes = DefaultMaxBytes, quint64 index = 0);
     // 终止写入端
     bool StopWriter();
 
     // 开启读取端
-    bool StartReader();
+    bool StartReader(QString key, qsizetype maxBytes = DefaultMaxBytes, quint64 index = 0);
     // 终止读取端
     bool StopReader();
 
+    // 取消
+    void Cancel();
+    // 是否取消
+    bool IsCanceling();
+
+    // 等待写入端上线
+    bool WaitUntilWriterAttached(qint32 msTimeout, bool lock = true);
+
     // 等待读取端上线
-    void WaitUntilReaderAttached(bool lock = true);
+    bool WaitUntilReaderAttached(qint32 msTimeout, bool lock = true);
 
     // 写入数据
     bool Write(QByteArray &content, IPC::WriteError &error, bool lock = true);
+    bool Write(const char *buffer, qint64 nbytes, IPC::WriteError &error, bool lock = true);
     // 读取数据
+    qint32 ReadInt32(IPC::ReadError &error, bool lock = true);
     bool Read(QByteArray &content, qsizetype nbytes, IPC::ReadError &error, bool lock = true);
 
     // 读取端上线，通知写入端
@@ -102,6 +127,16 @@ public:
 
     // 读取端是否已上线
     bool IsReaderAttached(bool lock = true);
+
+    // 判断是否活跃
+    bool IsWriterAlive(qint64 milliseconds);
+    bool IsReaderAlive(qint64 milliseconds);
+    void KeepWriterAlive(qint64 milliseconds = 0);
+    void KeepReaderAlive(qint64 milliseconds = 0);
+
+
+public slots:
+    void KeepAlive();
 
 
 private:
@@ -134,10 +169,16 @@ private:
     // 读取共享内存首字节类型
     char GetCharType(QSharedMemory *&pSharedMemory, bool lock = true);
 
+    // 读写心跳包
+    qint64 ReadHeartBeat(char *buffer);
+    void WriteHeartBeat(char *buffer, qint64 value);
+
     // 加锁
     bool Lock();
+    bool Lock(QSharedMemory *&pSharedMemory);
     // 解锁
     bool Unlock();
+    bool Unlock(QSharedMemory *&pSharedMemory);
     // 设置锁状态
     void SetLocked(bool status);
     void SetLocked(QSharedMemory *&pSharedMemory, bool status);
@@ -149,16 +190,26 @@ private:
     // 标记锁状态
     bool m_IsSharedMemory1Locked;
     bool m_IsSharedMemory2Locked;
+    bool m_IsSharedMemory3Locked;
 
     // 双缓冲
     QSharedMemory *m_pSharedMemory;
     QSharedMemory *m_pSharedMemory1;
     QSharedMemory *m_pSharedMemory2;
+    // 心跳包，写两端的时间戳
+    QSharedMemory *m_pSharedMemory3;  // 17个字节，起始字节写状态，接下来的8个字节记写入端心跳，末尾8个字节写读取端心跳
 
     // 共享内存键
     QString m_MemoryKey1;
     QString m_MemoryKey2;
+    QString m_MemoryKey3;
 
     // 共享内存大小
     qsizetype m_MaxBytes;
+
+    // 正在取消
+    bool m_isCanceling;
+
+    // 序号
+    quint64 m_index;
 };
