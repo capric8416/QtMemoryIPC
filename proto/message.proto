@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package message;
+
+
+// 一个最完整的消息可包括以下部分: 消息头大小 + 消息头 + 扩展头 + 消息体
+// 其中扩展头是可选的，消息体也是可选的
+
+
+// 基础头部
+message CommonHead {
+    enum Type {
+        NoMansLand = 0;
+        Audio = 1;                 // 音频
+        Video = 2;                 // 视频
+        Event = 3;                 // 事件
+    }
+
+    uint64 next_size = 1;          // 如果包含扩展头，此字段描述扩展头大小，否则描述消息体大小
+    Type type = 2;                 // 消息类型
+    bool extend = 3;               // 是否包含扩展头
+}
+
+
+// 音频消息扩展头
+message AudioHead {
+    enum Codec {
+        NoMansLand = 0;
+        G723_1 = 1; 
+    }
+
+    uint64 next_size = 1;          // 描述正文大小
+
+    optional Codec codec = 2;      // 编码类型   
+}
+
+
+// 视频消息扩展头
+message VideoHead {
+    enum FrameType {
+        NoMansLand = 0;
+        IntraCoded = 1;            // I 帧
+        Predicated = 2;            // P 帧
+        BiDirectional = 3;         // B 帧
+    }
+
+    enum Codec {
+        NoMansLand1 = 0;
+        AVC = 1;                   // H.264
+        HEVC = 2;                  // H.265
+    }
+
+    uint64 next_size = 1;          // 描述正文大小
+
+    bool partial = 2;              // 比如说I帧比较大，可拆成多个包，目前未使用
+    optional Codec codec = 3;      // 编码类型   
+    optional FrameType type = 4;   // 帧类型     
+    optional uint32 sequence = 5;  // 帧序号
+	optional uint32 width = 6;     // 视频宽
+	optional uint32 height = 7;    // 视频高
+	optional uint64 dts = 8;       // 送解码时间
+	optional uint64 pts = 9;       // 送显示时间
+}
+
+
+// 事件消息扩展头
+message EventHead {
+    enum Type {
+        NoMansLand = 0;
+        Close = 1;                 // 关闭流(无正文)
+        SetBrightnessFilter = 2;   // 设置亮度滤镜，正文为整型，范围是[-100, -100]，默认值为0
+        SetContrastFilter = 3;     // 设置对比度滤镜，正文为整型，范围是[-100, -100]，默认值为0
+        SetSaturationFilter = 4;   // 设置饱和度滤镜，正文为整型，范围是[-100, -100]，默认值为0
+        SetGammaFilter = 5;        // 设置近似伽马滤镜，正文为整型，范围是[-100, -100]，默认值为0
+        SetSpeed = 6;              // 设置播放速度，正文为整型，范围是[-100, 100]，默认值为0，送mpv前会将其转换为[0.01, 100]
+        TakeSnapshot = 7;          // 截图，正文为字符串型
+        Pause = 8;                 // 暂停播放(无正文)
+        Resume = 9;                // 恢复播放(无正文)
+        StepForward = 10;          // 向后单帧播放，每次调用播放一帧(无正文)
+        StepBackward = 11;         // 向前单帧播放，每次调用播放一帧(无正文)
+        StartRecordStream = 12;    // 开始录像，正文为字符串型
+        StopRecordStream = 13;     // 停止录像(无正文)
+    }
+
+    uint64 next_size = 1;          // 描述正文大小
+    Type type = 2;                 // 事件类型    
+}
